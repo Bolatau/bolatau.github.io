@@ -50,19 +50,24 @@ This Service may contain links to other sites. If you click on a third-party lin
 These Services do not address anyone under the age of 13. I do not knowingly collect personally identifiable information from children under 13. In the case I discover that a child under 13 has provided me with personal information, I immediately delete this from our servers. If you are a parent or guardian and you are aware that your child has provided us with personal information, please contact me so that I will be able to do necessary actions.
 
 **Legal action**
+
 The User's Personal Data may be used for legal purposes in Court or in the stages leading to possible legal action arising from improper use of this Application or the related Services.
 The User declares to be aware that I may be required to reveal personal data upon request of public authorities.
 
 **Additional information about User's Personal Data**
+
 In addition to the information contained in this privacy policy, this Application may provide the User with additional and contextual information concerning particular Services or the collection and processing of Personal Data upon request.
 
 **System logs and maintenance**
+
 For operation and maintenance purposes, this Application and any third-party services may collect files that record interaction with this Application (System logs) use other Personal Data (such as the IP Address) for this purpose.
 
 **Information not contained in this policy**
+
 More details concerning the collection or processing of Personal Data by this application may be requested at any time. Please see the contact information.
 
 **How “Do Not Track” requests are handled**
+
 This application does not support “Do Not Track” requests.
 To determine whether any of the third-party services it uses honor the “Do Not Track” requests, please read their privacy policies.
 
