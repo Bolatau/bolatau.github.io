@@ -77,4 +77,4 @@ I may update Privacy Policy. Thus, you are advised to review this page periodica
 
 **Contact Us**
 
-If you have any questions or suggestions about this Privacy Policy, contact me at nowteapplication@gmail.com
+If you have any questions or suggestions about this Privacy Policy, contact me at <nowteapplication@gmail.com>
