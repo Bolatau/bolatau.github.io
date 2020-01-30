@@ -73,7 +73,7 @@ To determine whether any of the third-party services it uses honor the “Do Not
 
 **Changes to This Privacy Policy**
 
-I reserve the right to change, alter, replace or otherwise modify these Privacy Policy at any time. Thus, you are advised to review this page periodically for any changes. It is your responsibility to check this page for updates. I will notify you of any changes by posting the new or modified Privacy Policy on this page. These changes are effective immediately after they are posted on this page.
+I reserve the right to change, alter, replace or otherwise modify this Privacy Policy at any time. Thus, you are advised to review this page periodically for any changes. It is your responsibility to check this page for updates. I will notify you of any changes by posting the new or modified Privacy Policy on this page. These changes are effective immediately after they are posted on this page.
 
 **Contact Us**
 
