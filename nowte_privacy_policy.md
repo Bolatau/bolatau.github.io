@@ -73,11 +73,11 @@ To determine whether any of the third-party services it uses honor the “Do Not
 
 **Changes to This Privacy Policy**
 
-I may update Privacy Policy. Thus, you are advised to review this page periodically for any changes. I will notify you of any changes by posting the new Privacy Policy on this page. These changes are effective immediately after they are posted on this page.
+I reserve the right to change, alter, replace or otherwise modify these Privacy Policy at any time. Thus, you are advised to review this page periodically for any changes. It is your responsibility to check this page for updates. I will notify you of any changes by posting the new or modified Privacy Policy on this page. These changes are effective immediately after they are posted on this page.
 
 **Contact Us**
 
 If you have any questions or suggestions about this Privacy Policy, contact me at <nowteapplication@gmail.com>
 
 Last updated:
-01/27/2020
+01/30/2020
