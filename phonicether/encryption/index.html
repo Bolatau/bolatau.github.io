@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noimageindex">
+<title>PhonicEther Encryption Specification</title>
+<meta name="description" content="The public specification of the encryption formats used by PhonicEther for Mac, iPhone and iPad.">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<main>
+<h1>PhonicEther Encryption Specification</h1>
+<p class="meta">Protocol version 3. Published 5 November 2026.</p>
+
+<section class="summary">
+<h2>Summary</h2>
+<ul>
+<li>PhonicEther encrypts audio and track information sent between a Mac and the iPhones and iPads paired with it.</li>
+<li>This page publishes the complete format. Security depends on secret keys, not on keeping the format secret.</li>
+<li>All algorithms are public standards. The packet formats and their combination are specific to PhonicEther and are described here.</li>
+<li>The app does not use encryption as a general service. A user cannot change the algorithms, keys or formats.</li>
+</ul>
+</section>
+
+<h2>1. Algorithms</h2>
+<div class="table-wrap">
+<table>
+<thead><tr><th scope="col">Purpose</th><th scope="col">Algorithm</th><th scope="col">Standard</th></tr></thead>
+<tbody>
+<tr><td>Confidentiality</td><td>AES-256 in CTR mode, big-endian counter</td><td>NIST FIPS 197, SP 800-38A</td></tr>
+<tr><td>Authentication</td><td>HMAC-SHA-256, full or first 16 bytes</td><td>RFC 2104, FIPS 180-4</td></tr>
+<tr><td>Key derivation</td><td>HKDF-SHA-256</td><td>RFC 5869</td></tr>
+<tr><td>Key agreement</td><td>ECDH on P-256</td><td>NIST SP 800-56A, FIPS 186</td></tr>
+<tr><td>Signatures</td><td>ECDSA on P-256 with SHA-256, X9.62 encoding</td><td>FIPS 186</td></tr>
+<tr><td>Guest PIN pairing</td><td>SPAKE2+, P256-SHA256-HKDF-SHA256-HMAC-SHA256</td><td>RFC 9383</td></tr>
+<tr><td>PIN stretching</td><td>PBKDF2-HMAC-SHA-256, 35,000 iterations, 80 bytes</td><td>RFC 8018</td></tr>
+<tr><td>Random numbers</td><td>Operating system random source</td><td>Platform standard</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2>2. Notation</h2>
+<ul>
+<li><code>a || b</code> means a followed by b. Integers are big-endian.</li>
+<li><code>HKDF(ikm, salt, info, n)</code> returns n bytes. An empty salt means zero bytes.</li>
+<li><code>CTR(key, iv, data)</code> is AES-256-CTR. <code>HMAC(key, data)</code> is HMAC-SHA-256.</li>
+<li><code>IV(nonce)</code> is a 12-byte nonce followed by four zero bytes.</li>
+<li>Public keys are 65-byte uncompressed X9.63 P-256 points. Text labels are UTF-8 with no terminator.</li>
+</ul>
+
+<h2>3. Keys</h2>
+<div class="table-wrap">
+<table>
+<thead><tr><th scope="col">Key</th><th scope="col">Source</th><th scope="col">Use</th></tr></thead>
+<tbody>
+<tr><td>Mac identity key</td><td>Long-lived P-256 key on the Mac. Its public key is pinned from the pairing QR code.</td><td>Signs session announcements and derives device control keys.</td></tr>
+<tr><td>Receiver identity key</td><td>Long-lived P-256 key on each iPhone or iPad.</td><td>Derives that device's control key.</td></tr>
+<tr><td>Group key</td><td>32 random bytes from the Mac.</td><td>Sent to each device during pairing.</td></tr>
+<tr><td>Device control key</td><td><code>HKDF(ECDH(identity keys), SHA-256("phonicether-v3-device-salt" || deviceID), "phonicether-v3-device-control", 32)</code></td><td>Authenticates control messages. Wraps the media key. Derives track information keys. Each device has its own.</td></tr>
+<tr><td>Media key</td><td>32 random bytes from the Mac.</td><td>Encrypts and authenticates audio. All current receivers of a stream share it.</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2>4. Pairing with a QR code</h2>
+<ol>
+<li>The QR code carries the Mac public key, a session identifier and a per-window proof secret.</li>
+<li>The device creates an ephemeral P-256 key. It proves that it scanned the code with <code>HMAC(secret, "sa-pair-v3-identity" || devicePublic || receiverIdentityPublic || "|v=" || version || "|id=" || deviceID)</code>.</li>
+<li>The Mac and the device compute Z with ECDH, then <code>TK = HKDF(Z, empty, "phonicether-provisioning-v1", 32)</code>.</li>
+<li>The Mac replies with <code>macPublic (65) || nonce (12) || CTR(TK, IV(nonce), groupKey) (32) || HMAC(TK, macPublic || nonce || ciphertext) (32)</code>. The device rejects a Mac public key that differs from the QR code.</li>
+</ol>
+
+<h2>5. Pairing with a guest PIN</h2>
+<ol>
+<li>Both sides derive w0 and w1 from the guest PIN with PBKDF2, using the salt <code>"sa-guest-v1"</code>. Each value is 40 bytes reduced modulo the P-256 group order.</li>
+<li>They run SPAKE2+ with the context <code>"PhonicEther-guest-v1|device-id=" || deviceID || "|phone-ephemeral=" || devicePublic || "|receiver-identity=" || receiverIdentityPublic</code>. The PIN does not cross the network.</li>
+<li>The transport key is <code>HKDF(len(Kshared) || Kshared || len(Z) || Z, empty, "phonicether-guest-identity-v3" || len(context) || context, 32)</code>, where Z comes from ECDH.</li>
+<li>The Mac sends the group key in the same layout as section 4. The tag covers a fixed label and the length-prefixed context, Mac public key, nonce and ciphertext.</li>
+</ol>
+
+<h2>6. Session announcement</h2>
+<p>The Mac gives each device the media key in a text message: <code>"SA3:"</code> followed by the Base64 of this packet.</p>
+<div class="table-wrap">
+<table>
+<thead><tr><th scope="col">Field</th><th scope="col">Content</th></tr></thead>
+<tbody>
+<tr><td>Header</td><td><code>"SA3"</code>, then version byte 3</td></tr>
+<tr><td>Body</td><td>Device and session identifiers, media epoch, timestamp, Mac public key (65), nonce (12), wrapped media key (32), tag (32)</td></tr>
+<tr><td>Wrapped media key</td><td><code>CTR(deviceControlKey, IV(nonce), mediaKey)</code></td></tr>
+<tr><td>Tag</td><td><code>HMAC(deviceControlKey, "phonicether-v3-media-key-envelope" || body without tag)</code></td></tr>
+<tr><td>Signature</td><td>Two-byte length, then ECDSA over <code>"phonicether-v3-session" || body with tag</code>, using the Mac identity key</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2>7. Audio packets</h2>
+<div class="table-wrap">
+<table>
+<thead><tr><th scope="col">Offset</th><th scope="col">Bytes</th><th scope="col">Content</th></tr></thead>
+<tbody>
+<tr><td>0</td><td>2</td><td>Sequence number</td></tr>
+<tr><td>2</td><td>2</td><td>Ciphertext length and flags</td></tr>
+<tr><td>4</td><td>6</td><td>Media epoch</td></tr>
+<tr><td>10</td><td>6</td><td>Packet counter</td></tr>
+<tr><td>16</td><td>n</td><td><code>CTR(mediaKey, bytes 4 to 15 || four zero bytes, audio)</code></td></tr>
+<tr><td>16 + n</td><td>16</td><td>First 16 bytes of <code>HMAC(mediaKey, bytes 0 to 15 + n)</code></td></tr>
+</tbody>
+</table>
+</div>
+<p>The receiver verifies the tag before it decrypts, and drops the packet if the tag fails. The epoch and counter keep each IV unique for a media key. If no key is available, the Mac does not send the audio.</p>
+<p>A large message can be split into fragments. Each fragment starts with its own header and ends with the first 16 bytes of <code>HMAC(mediaKey, "sa-media-fragment-v1" || fragment)</code>.</p>
+
+<h2>8. Track information</h2>
+<p>Each device receives its own copy. For each type of message:</p>
+<p><code>material = HKDF(deviceControlKey, session || epoch (8), info, 64)</code>. The first 32 bytes encrypt and the last 32 bytes authenticate. The IV is 16 random bytes.</p>
+<div class="table-wrap">
+<table>
+<thead><tr><th scope="col">Message</th><th scope="col">Info label</th><th scope="col">Layout</th></tr></thead>
+<tbody>
+<tr><td>Title, artist and album</td><td><code>phonicether.source-metadata.v1</code></td><td><code>"SAM1" || epoch (8) || revision (8) || IV (16) || ciphertext of JSON || tag (16)</code></td></tr>
+<tr><td>Artwork fragment</td><td><code>phonicether.source-artwork.v1</code></td><td><code>"SAA1" || epoch (8) || revision (8) || HMAC(authKey, SHA-256(image)) (32) || index (2) || count (2) || total (4) || IV (16) || ciphertext of SHA-256(image) and an image fragment || tag (16)</code></td></tr>
+</tbody>
+</table>
+</div>
+<p>The tag is the first 16 bytes of <code>HMAC(authKey, all earlier bytes)</code>.</p>
+
+<h2>9. Control messages</h2>
+<p>Control messages are authenticated, not encrypted. They contain no audio and no track text.</p>
+<ul>
+<li><strong>Reports:</strong> <code>payload || unixTime (8) || tag (16)</code>, with the tag from <code>HMAC(deviceControlKey, "sa-media-report-v3" || payload || unixTime)</code>.</li>
+<li><strong>Leases:</strong> a text body with <code>HMAC(deviceControlKey, "SALEASE:v3:" || body)</code>.</li>
+</ul>
+<p>Discovery messages are not encrypted. They can show the Mac's name and network address, and they contain no audio.</p>
+
+<h2>10. Changes</h2>
+<p>Each new media epoch gets a new random media key, and a removed device does not receive it. We will update this page when the format changes.</p>
+
+<h2>11. Export classification</h2>
+<p>The developer self-classified PhonicEther on 5 November 2026 as a mass market encryption item, ECCN 5D992.c, under 15 CFR 740.17(b)(1) and Note 3 to Category 5, Part 2 of the US Export Administration Regulations. This is the developer's own classification, not a government determination.</p>
+
+<h2>12. Contact</h2>
+<div class="contact" data-contact>
+<button type="button" hidden>Show email address</button>
+<noscript><img src="../assets/contact.png" alt="Our email address, shown as an image because JavaScript is off"></noscript>
+</div>
+</main>
+<script src="../assets/contact.js"></script>
+</body>
+</html>

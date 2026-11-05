@@ -1,5 +1,382 @@
-<h1>This is stub for published apps</h1>
-<h2>Nowte app privacy policy:</h2>
-<a href="https://bolatau.github.io/nowte_privacy_policy">https://bolatau.github.io/nowte_privacy_policy</a>
-<h2>GitHub:</h2>
-<a href="https://github.com/Bolatau">https://github.com/Bolatau</a>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050507">
+<meta name="color-scheme" content="dark">
+<title>Bolatau Apps</title>
+<meta name="description" content="Apps by Bolatau, with their privacy policies and support pages.">
+<style>
+:root {
+  --ink: #f4f1e8;
+  --body: rgba(244, 241, 232, 0.9);
+  --line: rgba(244, 241, 232, 0.38);
+  --matte-top: rgba(255, 255, 255, 0.13);
+  --matte-mid: rgba(255, 255, 255, 0.025);
+  --matte-low: rgba(0, 0, 0, 0.12);
+  --floor: #050507;
+}
+@media (prefers-contrast: more) {
+  :root { --matte-top: rgba(255, 255, 255, 0.08); --matte-low: rgba(0, 0, 0, 0.25); --body: var(--ink); --line: rgba(244, 241, 232, 0.7); }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--floor);
+  color: var(--ink);
+  font: 18px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI Variable Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+/* The whole window is the display: a 48 x 48 field that the GPU scales, under matte glass and grain. */
+.field, .layer { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+/* Stretched to the window like the app's field, so the pools stay large and soft. */
+.field { object-fit: fill; background: linear-gradient(150deg, #7b22d6, #ab2588 45%, #3a3ae0); }
+.depth { background: rgba(0, 0, 0, 0.1); }
+.matte { background: linear-gradient(146deg, var(--matte-top) 0%, var(--matte-mid) 46%, var(--matte-low) 100%); }
+.grain { opacity: 0.075; background-size: 192px 192px; }
+/* Glass light: a soft sheen from the top left and a gentle fall-off at the edges. Static, so it costs nothing per frame. */
+.sheen { background: radial-gradient(120% 90% at 15% -10%, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0) 60%), radial-gradient(140% 120% at 50% 45%, rgba(0, 0, 0, 0) 55%, rgba(0, 0, 0, 0.2) 100%); }
+/* Large and then small, centred just above the middle, as on the "You're in" screen. */
+main {
+  position: relative;
+  display: flex; flex-direction: column; justify-content: center; align-items: center;
+  min-height: 92vh; min-height: 92svh;
+  max-width: 640px; margin: 0 auto;
+  padding: max(48px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) 48px max(20px, env(safe-area-inset-left));
+  text-align: center;
+}
+h1, h2 { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI Variable Display", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-weight: 500; letter-spacing: -0.026em; }
+h1 { font-size: clamp(3rem, 11vw, 4.1rem); line-height: 1.02; }
+.lede { margin: 12px 0 0; color: var(--body); font-size: 1.11rem; }
+.apps { margin: 56px 0 0; padding: 0; list-style: none; display: grid; gap: 34px; }
+h2 { font-size: 1.5rem; line-height: 1.2; }
+.links { margin: 6px 0 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; justify-content: center; column-gap: 26px; }
+a {
+  display: inline-flex; align-items: center; min-height: 44px;
+  color: var(--body); font-size: 1rem; text-decoration: underline; text-decoration-color: var(--line);
+  text-decoration-thickness: 1px; text-underline-offset: 5px;
+  transition: color 180ms ease, text-decoration-color 180ms ease;
+}
+a:hover { color: var(--ink); text-decoration-color: var(--ink); }
+a:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; border-radius: 2px; }
+footer { position: relative; padding: 0 20px max(24px, env(safe-area-inset-bottom)); text-align: center; }
+footer a { font-size: 0.9rem; }
+/* Each line arrives once: a fade and a small rise, the app's ease-out. */
+.arrive { opacity: 0; transform: translateY(var(--rise, 6px)); animation: arrive var(--time, 900ms) cubic-bezier(0.16, 1, 0.3, 1) var(--delay, 0ms) forwards; }
+@keyframes arrive { to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .arrive { opacity: 1; transform: none; animation: none; }
+  a { transition: none; }
+}
+/* As in the app, reduced transparency removes the grain texture but keeps the field, depth and matte.
+   A 3% grain stays: about one 8-bit step, so the gradient does not band. */
+@media (prefers-reduced-transparency: reduce) {
+  .sheen { display: none; }
+  .grain { opacity: 0.03; }
+}
+@media (forced-colors: active) {
+  .field, .layer { display: none; }
+}
+</style>
+</head>
+<body>
+<canvas class="field" width="48" height="48" aria-hidden="true"></canvas>
+<div class="layer depth" aria-hidden="true"></div>
+<div class="layer matte" aria-hidden="true"></div>
+<div class="layer sheen" aria-hidden="true"></div>
+<div class="layer grain" aria-hidden="true"></div>
+<main>
+<h1 class="arrive" style="--rise: 10px; --time: 1100ms; --delay: 150ms">Apps.</h1>
+<p class="lede arrive" style="--delay: 550ms">Privacy, support and technical pages.</p>
+<ul class="apps">
+<li class="arrive" style="--delay: 850ms">
+<h2>PhonicEther</h2>
+<ul class="links">
+<li><a href="phonicether/privacy/">Privacy Policy</a></li>
+<li><a href="phonicether/support/">Support</a></li>
+<li><a href="phonicether/encryption/">Encryption</a></li>
+</ul>
+</li>
+<li class="arrive" style="--delay: 1050ms">
+<h2>Nowte</h2>
+<ul class="links">
+<li><a href="https://bolatau.github.io/nowte_privacy_policy">Privacy Policy</a></li>
+</ul>
+</li>
+</ul>
+</main>
+<footer class="arrive" style="--delay: 1250ms"><a href="https://github.com/Bolatau">GitHub</a></footer>
+<script>
+/* field:start - a port of AmbientFluidField.swift (PhonicEther), dye advection on a 48 x 48 grid. */
+function createField(colors) {
+  var N = 48, C = N * N, TAU = Math.PI * 2;
+  var dye = new Float32Array(C * 4), next = new Float32Array(C * 4), seed = new Float32Array(C * 4), vel = new Float32Array(C * 4);
+  var pixels = new Uint8ClampedArray(C * 4), encode = new Uint8Array(4096), time = 0;
+  for (var e = 0; e < 4096; e++) {
+    var v = e / 4095, s = v <= 0.0031308 ? 12.92 * v : 1.055 * Math.pow(v, 1 / 2.4) - 0.055;
+    encode[e] = Math.round(Math.min(1, Math.max(0, s)) * 255);
+  }
+  for (var a = 3; a < C * 4; a += 4) pixels[a] = 255;
+  function linear(v) { return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }
+  function pattern(x, y) {
+    var u = (x + 0.5) / N, w = (y + 0.5) / N;
+    var p = 0.5 + 0.24 * Math.sin(TAU * (u + 0.22 * Math.sin(TAU * w))) + 0.18 * Math.cos(TAU * (w + 0.3 * Math.cos(TAU * u))) + 0.11 * Math.sin(TAU * (2 * u + w) + 1.5);
+    return Math.min(1, Math.max(0, p));
+  }
+  var rgb = colors.map(function (h) { return [(h >> 16 & 255) / 255, (h >> 8 & 255) / 255, (h & 255) / 255]; });
+  var inks = rgb.map(function (c) { return c.map(linear); });
+  var sites = [[0.18, 0.22], [0.76, 0.39], [0.43, 0.81], [0.82, 0.86], [0.13, 0.65], [0.49, 0.12]];
+  var weights = [1.45, 1, 0.78, 0.42, 0.34, 0.28], phase = rgb[0][0] * 0.31 + rgb[0][2] * 0.19;
+  var mx = 0, my = 0, mw = 0;
+  for (var y = 0; y < N; y++) for (var x = 0; x < N; x++) {
+    var u = (x + 0.5) / N, w = (y + 0.5) / N, r = 0, g = 0, b = 0, total = 0;
+    for (var i = 0; i < inks.length && i < 6; i++) {
+      var cx = (sites[i][0] + phase) % 1, cy = (sites[i][1] + phase * 0.7) % 1;
+      var ax = Math.abs(u - cx), ay = Math.abs(w - cy), dx = Math.min(ax, 1 - ax), dy = Math.min(ay, 1 - ay);
+      var d = 0.018 + dx * dx + dy * dy, f = weights[i] / (d * d * d);
+      r += inks[i][0] * f; g += inks[i][1] * f; b += inks[i][2] * f; total += f;
+    }
+    var k = (0.74 + 0.24 * pattern(x, y)) / total, o = (y * N + x) * 4;
+    seed[o] = r * k; seed[o + 1] = g * k; seed[o + 2] = b * k; seed[o + 3] = 0.2126 * r * k + 0.7152 * g * k + 0.0722 * b * k;
+    var sig = 0.15 + seed[o] * 1.7 + seed[o + 1] * 0.9 + seed[o + 2] * 2.3;
+    mx += sig * u; my += sig * w; mw += sig;
+  }
+  var px = mx / mw * 1.7 + rgb[0][0] * 0.31 + rgb[0][2] * 0.23, py = my / mw * 2.1 + rgb[1][1] * 0.37 + rgb[1][2] * 0.19;
+  for (y = 0; y < N; y++) for (x = 0; x < N; x++) {
+    u = (x + 0.5) / N + px; w = (y + 0.5) / N + py; o = (y * N + x) * 4;
+    var diag = Math.sin(TAU * (2 * u - w) + 0.8);
+    vel[o] = 0.12 * Math.sin(TAU * u + 0.3) * Math.cos(TAU * w + 0.7) + 0.04 * diag + 0.045 * Math.cos(TAU * w + 1.8);
+    vel[o + 1] = -0.12 * Math.cos(TAU * u + 0.3) * Math.sin(TAU * w + 0.7) + 0.08 * diag + 0.055 * Math.sin(TAU * u + 0.45);
+    vel[o + 2] = 0.12 * Math.sin(TAU * u + 1.3) * Math.cos(2 * TAU * w + 1.1) + 0.075 * Math.cos(2 * TAU * w + 0.9);
+    vel[o + 3] = -0.06 * Math.cos(TAU * u + 1.3) * Math.sin(2 * TAU * w + 1.1) + 0.07 * Math.sin(2 * TAU * u + 1.7);
+  }
+  dye.set(seed);
+  // One pass per step, with bilinear sampling written out (no calls or temporary arrays).
+  function advance(seconds) {
+    var dt = Math.min(0.15, seconds);
+    time += dt;
+    var ph = time * 0.21, flowA = 0.75 * Math.cos(ph), flowB = 0.75 * Math.sin(ph + 0.45);
+    var driftX = 0.018 * Math.cos(time * 0.11), driftY = 0.014 * Math.sin(time * 0.13);
+    var diffusion = 0.12 * dt, replenish = 0.2 * dt, step = dt * N;
+    var fx0 = N * 0.14 * Math.sin(time * 0.13), fy0 = N * 0.12 * (Math.cos(time * 0.11) - 1);
+    var src = dye, out = next;
+    for (var y = 0; y < N; y++) {
+      var up = (y === 0 ? N - 1 : y - 1) * N, down = (y + 1 === N ? 0 : y + 1) * N, row = y * N;
+      for (var x = 0; x < N; x++) {
+        var o = (row + x) * 4;
+        var sx = x - (flowA * vel[o] + flowB * vel[o + 2] + driftX) * step;
+        var sy = y - (flowA * vel[o + 1] + flowB * vel[o + 3] + driftY) * step;
+        sx = sx < 0 ? sx + N : (sx >= N ? sx - N : sx); sy = sy < 0 ? sy + N : (sy >= N ? sy - N : sy);
+        var x0 = sx | 0, y0 = sy | 0, x1 = x0 + 1 === N ? 0 : x0 + 1, y1 = y0 + 1 === N ? 0 : y0 + 1;
+        var ax = sx - x0, ay = sy - y0, w00 = (1 - ax) * (1 - ay), w10 = ax * (1 - ay), w01 = (1 - ax) * ay, w11 = ax * ay;
+        var a = (y0 * N + x0) * 4, b = (y0 * N + x1) * 4, c = (y1 * N + x0) * 4, d = (y1 * N + x1) * 4;
+        var qx = x + fx0, qy = y + fy0;
+        qx = qx < 0 ? qx + N : (qx >= N ? qx - N : qx); qy = qy < 0 ? qy + N : (qy >= N ? qy - N : qy);
+        var q0 = qx | 0, r0 = qy | 0, q1 = q0 + 1 === N ? 0 : q0 + 1, r1 = r0 + 1 === N ? 0 : r0 + 1;
+        var bx = qx - q0, by = qy - r0, v00 = (1 - bx) * (1 - by), v10 = bx * (1 - by), v01 = (1 - bx) * by, v11 = bx * by;
+        var e = (r0 * N + q0) * 4, f = (r0 * N + q1) * 4, g = (r1 * N + q0) * 4, h = (r1 * N + q1) * 4;
+        var l = (row + (x === 0 ? N - 1 : x - 1)) * 4, r = (row + (x + 1 === N ? 0 : x + 1)) * 4, t = (up + x) * 4, bt = (down + x) * 4;
+        for (var k = 0; k < 4; k++) {
+          var advected = src[a + k] * w00 + src[b + k] * w10 + src[c + k] * w01 + src[d + k] * w11;
+          var feed = seed[e + k] * v00 + seed[f + k] * v10 + seed[g + k] * v01 + seed[h + k] * v11;
+          var value = advected + diffusion * (src[l + k] + src[r + k] + src[t + k] + src[bt + k] - 4 * src[o + k]) + replenish * (feed - advected);
+          out[o + k] = value < 0 ? 0 : (value > 1 ? 1 : value);
+        }
+      }
+    }
+    dye = out; next = src;
+  }
+  function image() {
+    for (var i = 0; i < C; i++) {
+      var o = i * 4;
+      pixels[o] = encode[Math.round(Math.min(1, dye[o]) * 4095)];
+      pixels[o + 1] = encode[Math.round(Math.min(1, dye[o + 1]) * 4095)];
+      pixels[o + 2] = encode[Math.round(Math.min(1, dye[o + 2]) * 4095)];
+    }
+    return pixels;
+  }
+  return { advance: advance, image: image, side: N };
+}
+/* field:end */
+(function () {
+  var canvas = document.querySelector(".field");
+  // The "iris" stage palette of the app's "You're in" screen. scripts/check_onboarding_palette.py checks its text contrast.
+  var field = createField([0x7B22D6, 0xAB2588, 0x3A3AE0, 0xAA3160]);
+  var N = field.side, P = N + 4, padded = new Uint8Array(P * P * 4);
+  // The field wraps, so a 2-texel border copied from the opposite edges lets the GPU filter across the seam.
+  function pad(pixels) {
+    for (var y = 0; y < P; y++) {
+      var sy = (y - 2 + N) % N;
+      for (var x = 0; x < P; x++) {
+        var s = (sy * N + (x - 2 + N) % N) * 4, o = (y * P + x) * 4;
+        padded[o] = pixels[s]; padded[o + 1] = pixels[s + 1]; padded[o + 2] = pixels[s + 2]; padded[o + 3] = 255;
+      }
+    }
+    return padded;
+  }
+  var draw = startGL(), renderer = "webgl";
+  if (!draw) {
+    // A canvas that has a WebGL context cannot give a 2D one, so the fallback draws on a fresh canvas.
+    var fresh = canvas.cloneNode(false);
+    canvas.parentNode.replaceChild(fresh, canvas); canvas = fresh;
+    draw = start2D(); renderer = "2d";
+  }
+  if (!draw) return;
+  canvas.setAttribute("data-renderer", renderer);
+  function startGL() {
+    var gl = canvas.getContext("webgl", { alpha: false, antialias: false, depth: false, stencil: false, powerPreference: "low-power" });
+    if (!gl || gl.isContextLost()) return null;
+    // B-spline upscaling in four bilinear taps (GPU Gems 2, ch. 20), then a one-step dither below 8-bit banding.
+    var fragment = "#ifdef GL_FRAGMENT_PRECISION_HIGH\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n" +
+      "uniform sampler2D field; uniform vec2 size; uniform vec2 spread;" +
+      "vec4 weights(float v) { vec4 n = vec4(1.0, 2.0, 3.0, 4.0) - v; vec4 s = n * n * n; float x = s.x, y = s.y - 4.0 * s.x, z = s.z - 4.0 * s.y + 6.0 * s.x; return vec4(x, y, z, 6.0 - x - y - z) / 6.0; }" +
+      "float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }" +
+      "void main() {" +
+      "  vec2 uv = gl_FragCoord.xy / size; uv.y = 1.0 - uv.y;" +
+      "  vec2 t = fract((uv - 0.5) * spread + 0.5) * " + N.toFixed(1) + " + 2.0 - 0.5;" +
+      "  vec2 f = fract(t); t -= f;" +
+      "  vec4 wx = weights(f.x), wy = weights(f.y);" +
+      "  vec4 c = t.xxyy + vec2(-0.5, 1.5).xyxy;" +
+      "  vec4 s = vec4(wx.xz + wx.yw, wy.xz + wy.yw);" +
+      "  vec4 o = (c + vec4(wx.yw, wy.yw) / s) / " + P.toFixed(1) + ";" +
+      "  vec3 a = texture2D(field, o.xz).rgb, b = texture2D(field, o.yz).rgb, d = texture2D(field, o.xw).rgb, e = texture2D(field, o.yw).rgb;" +
+      "  float sx = s.x / (s.x + s.y), sy = s.z / (s.z + s.w);" +
+      "  vec3 color = mix(mix(e, d, sx), mix(b, a, sx), sy);" +
+      "  float n = hash(gl_FragCoord.xy) + hash(gl_FragCoord.yx + 17.0) - 1.0;" +
+      "  gl_FragColor = vec4(color + n / 255.0, 1.0);" +
+      "}";
+    function compile(type, source) {
+      var shader = gl.createShader(type);
+      if (!shader) return null;
+      gl.shaderSource(shader, source); gl.compileShader(shader);
+      return gl.getShaderParameter(shader, gl.COMPILE_STATUS) ? shader : null;
+    }
+    var vs = compile(gl.VERTEX_SHADER, "attribute vec2 p; void main() { gl_Position = vec4(p, 0.0, 1.0); }"), fs = compile(gl.FRAGMENT_SHADER, fragment);
+    if (!vs || !fs) return null;
+    var program = gl.createProgram(); gl.attachShader(program, vs); gl.attachShader(program, fs); gl.linkProgram(program);
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) return null;
+    gl.useProgram(program);
+    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+    var position = gl.getAttribLocation(program, "p"); gl.enableVertexAttribArray(position); gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
+    gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
+    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, P, P, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    var sizeAt = gl.getUniformLocation(program, "size"), spreadAt = gl.getUniformLocation(program, "spread");
+    function resize() {
+      var w = canvas.clientWidth || innerWidth, h = canvas.clientHeight || innerHeight;
+      // Device pixels for the dither, capped at 2.5 megapixels: the field itself has no fine detail.
+      var scale = Math.min(window.devicePixelRatio || 1, Math.sqrt(2.5e6 / (w * h)));
+      canvas.width = Math.max(1, Math.round(w * scale)); canvas.height = Math.max(1, Math.round(h * scale));
+      gl.viewport(0, 0, canvas.width, canvas.height);
+      gl.uniform2f(sizeAt, canvas.width, canvas.height);
+      // The app stretches its square field to the window. Past 1.8 times, repeat the periodic field instead.
+      var aspect = w / h;
+      gl.uniform2f(spreadAt, Math.max(1, aspect / 1.8), Math.max(1, 1 / aspect / 1.8));
+    }
+    resize();
+    canvas.addEventListener("webglcontextlost", function (event) { event.preventDefault(); }, false);
+    function render() { gl.drawArrays(gl.TRIANGLES, 0, 3); }
+    function upload() { gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, P, P, gl.RGBA, gl.UNSIGNED_BYTE, pad(field.image())); render(); }
+    // Self-check before use: two pixels must match the CPU field, so a blank, flipped or broken GPU path never shows.
+    upload();
+    var pixels = field.image(), probe = new Uint8Array(4), aspect = canvas.width / canvas.height;
+    var spread = [Math.max(1, aspect / 1.8), Math.max(1, 1 / aspect / 1.8)];
+    for (var i = 0; i < 2; i++) {
+      var gx = Math.floor(canvas.width * (i ? 0.3 : 0.62)), gy = Math.floor(canvas.height * (i ? 0.27 : 0.71));
+      gl.readPixels(gx, gy, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, probe);
+      var u = (gx + 0.5) / canvas.width, v = 1 - (gy + 0.5) / canvas.height;
+      var fx = (((u - 0.5) * spread[0] + 0.5) % 1 + 1) % 1 * N - 0.5, fy = (((v - 0.5) * spread[1] + 0.5) % 1 + 1) % 1 * N - 0.5;
+      var x0 = Math.floor(fx), y0 = Math.floor(fy), ax = fx - x0, ay = fy - y0;
+      for (var c = 0; c < 3; c++) {
+        var at = function (x, y) { return pixels[(((y + N) % N) * N + (x + N) % N) * 4 + c]; };
+        var expected = (at(x0, y0) * (1 - ax) + at(x0 + 1, y0) * ax) * (1 - ay) + (at(x0, y0 + 1) * (1 - ax) + at(x0 + 1, y0 + 1) * ax) * ay;
+        if (Math.abs(probe[c] - expected) > 28 || gl.getError() !== gl.NO_ERROR) return null;
+      }
+    }
+    addEventListener("resize", function () { resize(); upload(); });
+    return upload;
+  }
+  function start2D() {
+    var context = canvas.getContext && canvas.getContext("2d");
+    if (!context) return null;
+    // Without WebGL: the same B-spline filter enlarges the field 2x on the CPU, so the browser's
+    // bilinear scaling has half the creases. Separable, with tap indices and weights computed once.
+    var M = N * 2, frame = context.createImageData(M, M), rows = new Float32Array(M * N * 3);
+    var index = new Int32Array(M * 4), weight = new Float32Array(M * 4);
+    canvas.width = canvas.height = M;
+    for (var o = 0; o < M; o++) {
+      var at = (o + 0.5) / 2 - 0.5, base = Math.floor(at), f = at - base, g = 1 - f;
+      var w = [g * g * g / 6, (3 * f * f * f - 6 * f * f + 4) / 6, (3 * g * g * g - 6 * g * g + 4) / 6, f * f * f / 6];
+      for (var k = 0; k < 4; k++) { index[o * 4 + k] = (base - 1 + k + N) % N; weight[o * 4 + k] = w[k]; }
+    }
+    for (var a = 3; a < M * M * 4; a += 4) frame.data[a] = 255;
+    return function () {
+      var pixels = field.image(), out = frame.data, x, y, i, j, r, g2, b, w0, w1, w2, w3, p0, p1, p2, p3, row;
+      for (y = 0; y < N; y++) {
+        row = y * N;
+        for (x = 0; x < M; x++) {
+          i = x * 4; w0 = weight[i]; w1 = weight[i + 1]; w2 = weight[i + 2]; w3 = weight[i + 3];
+          p0 = (row + index[i]) * 4; p1 = (row + index[i + 1]) * 4; p2 = (row + index[i + 2]) * 4; p3 = (row + index[i + 3]) * 4;
+          j = (y * M + x) * 3;
+          rows[j] = pixels[p0] * w0 + pixels[p1] * w1 + pixels[p2] * w2 + pixels[p3] * w3;
+          rows[j + 1] = pixels[p0 + 1] * w0 + pixels[p1 + 1] * w1 + pixels[p2 + 1] * w2 + pixels[p3 + 1] * w3;
+          rows[j + 2] = pixels[p0 + 2] * w0 + pixels[p1 + 2] * w1 + pixels[p2 + 2] * w2 + pixels[p3 + 2] * w3;
+        }
+      }
+      for (y = 0; y < M; y++) {
+        i = y * 4; w0 = weight[i]; w1 = weight[i + 1]; w2 = weight[i + 2]; w3 = weight[i + 3];
+        var q0 = index[i] * M * 3, q1 = index[i + 1] * M * 3, q2 = index[i + 2] * M * 3, q3 = index[i + 3] * M * 3;
+        for (x = 0; x < M; x++) {
+          var c = x * 3, d = (y * M + x) * 4;
+          out[d] = rows[q0 + c] * w0 + rows[q1 + c] * w1 + rows[q2 + c] * w2 + rows[q3 + c] * w3;
+          out[d + 1] = rows[q0 + c + 1] * w0 + rows[q1 + c + 1] * w1 + rows[q2 + c + 1] * w2 + rows[q3 + c + 1] * w3;
+          out[d + 2] = rows[q0 + c + 2] * w0 + rows[q1 + c + 2] * w1 + rows[q2 + c + 2] * w2 + rows[q3 + c + 2] * w3;
+        }
+      }
+      context.putImageData(frame, 0, 0);
+    };
+  }
+  // Grain at the screen's real pixel size, as the app draws it.
+  var grainLayer = document.querySelector(".grain"), tile = document.createElement("canvas");
+  tile.width = tile.height = 192;
+  var grainContext = tile.getContext("2d"), noise = grainContext.createImageData(192, 192), state = 0x53414D42;
+  for (var p = 0; p < 192 * 192; p++) {
+    state = (Math.imul(1664525, state) + 1013904223) >>> 0;
+    var gray = 96 + ((state >>> 24) & 63);
+    noise.data[p * 4] = noise.data[p * 4 + 1] = noise.data[p * 4 + 2] = gray; noise.data[p * 4 + 3] = 255;
+  }
+  grainContext.putImageData(noise, 0, 0);
+  var tileSize = 192 / (window.devicePixelRatio || 1);
+  grainLayer.style.backgroundImage = "url(" + tile.toDataURL() + ")";
+  grainLayer.style.backgroundSize = tileSize + "px " + tileSize + "px";
+  var still = window.matchMedia("(prefers-reduced-motion: reduce)");
+  for (var s = 0; s < 90; s++) field.advance(1 / 15);
+  draw();
+  var step = 1 / 30, last = 0, carry = 0, running = false;
+  function tick(now) {
+    if (!running) return;
+    if (last) carry += Math.min(0.25, (now - last) / 1000);
+    last = now;
+    if (carry >= step) { field.advance(carry); carry = 0; draw(); }
+    requestAnimationFrame(tick);
+  }
+  function update() {
+    var wanted = !still.matches && !document.hidden;
+    if (wanted === running) return;
+    running = wanted; last = 0; carry = 0;
+    if (running) requestAnimationFrame(tick);
+  }
+  document.addEventListener("visibilitychange", update);
+  if (still.addEventListener) still.addEventListener("change", update); else still.addListener(update);
+  update();
+})();
+</script>
+</body>
+</html>
